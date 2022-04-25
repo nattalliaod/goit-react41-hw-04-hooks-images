@@ -1,42 +1,34 @@
-import { Component } from "react";
+import { useState } from "react";
 import { ImSearch } from 'react-icons/im';
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import PropTypes from 'prop-types';
 import { Search, SearchForm, SearchIcon, SearchFormInput } from "./Searchbar.styled";
 
-export class Searchbar extends Component {
-    
-    static propTypes = {
-    onSubmit: PropTypes.func.isRequired,
-    }
-    
-    state = {
-        query: '',
-    }
-
-    handleNameChange = event => {
-    this.setState({ query: event.currentTarget.value.toLowerCase() });
+export const Searchbar = ({onSubmit}) => {
+    const [query, setQuery] = useState(''); 
+   
+    const handleNameChange = event => {
+    setQuery( event.currentTarget.value.toLowerCase());
     };
 
-    handleSubmit = event => {
+    const handleSubmit = event => {
     event.preventDefault();
 
-    if (this.state.query.trim() === '') {
+    if (query.trim() === '') {
         toast.error('Enter your query', {
             theme: "dark"
         });
       return;
     }
 
-    this.props.onSubmit(this.state.query);
-    this.setState({ query: '' });
+    onSubmit(query);
+    setQuery('');
     };
     
-    render() {
         return (
             <>
-                <Search onSubmit={this.handleSubmit}>
+                <Search onSubmit={handleSubmit}>
                     <SearchForm>
 
                         <SearchIcon type="submit">
@@ -44,8 +36,8 @@ export class Searchbar extends Component {
                         </SearchIcon>
 
                         <SearchFormInput
-                            value={this.state.query}
-                            onChange={this.handleNameChange}
+                            value={query}
+                            onChange={handleNameChange}
                             name='query'
                             type="text"
                             autoComplete="off"
@@ -57,5 +49,7 @@ export class Searchbar extends Component {
             </>
         );
 }
-}
 
+Searchbar.propTypes = {
+    onSubmit: PropTypes.func.isRequired,
+    }

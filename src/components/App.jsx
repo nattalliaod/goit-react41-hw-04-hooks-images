@@ -1,4 +1,4 @@
-import { Component } from "react";
+import { useEffect, useState } from "react";
 import { animateScroll as scroll } from 'react-scroll';
 import { toast, ToastContainer } from 'react-toastify';
 import { Searchbar } from "./Searchbar/Searchbar";
@@ -9,96 +9,96 @@ import { Spinner } from "./Loader/Loader";
 import * as Api from '../servisApi/pixabay-api';
 import { Container, Text } from "./App.styled";
 
-export class App extends Component {
+const Status = {
+  IDLE: 'idle',
+  PENDING: 'pending',
+  RESOLVED: 'resolved',
+  REJECTED: 'rejected',
+};
 
-  state = {
-    query: '',
-    page: 1,
-    gallery: [],
-    status: 'idle',
-    showModal: false,
-    isLoading: false,
-    largeUrl: null,
-    alt: null,
-  };
+export const App = () => {
+  const [query, setQuery] = useState('');
+  const [page, setPage] = useState(1);
+  const [gallery, setGallery] = useState([]);
+  const [status, setStatus] = useState(Status.IDLE);
+  const [showModal, setShowModal] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [largeUrl, setLargeUrl] = useState(null);
+  const [alt, setAlt] = useState(null);
 
-  async componentDidUpdate(_, prevState) {
-    const { query, page } = this.state;
-  
-   try {
-      if (query !== prevState.query || page !==prevState.page) {
+  useEffect(() => {
+    
+    async function fetchImg() {
+      if (!query) return;
+
+      try {
         await Api.fetchPixabay(query, page).then(({ hits }) => {
-          this.setState(prevState => ({
-            gallery: [...prevState.gallery, ...hits.map(({ webformatURL, tags, largeImageURL }) => ({
-              webformatURL, tags, largeImageURL
-            }))],
-            status: 'resolved',
-            isLoading: false,
-          }));
-          this.scrollToBottom();
-      })
- }  
-   } catch {
-     toast.error('Enter other query', {
-                theme: 'colored',
-              });
+          setIsLoading(false);
+          setGallery(state => [...state, ...hits.map(({ webformatURL, tags, largeImageURL }) => ({
+            webformatURL, tags, largeImageURL
+          }))]);
+          
+          setStatus(Status.RESOLVED);
+          scrollToBottom();
+        })
+      } catch {
+        toast.error('Enter other query', {
+          theme: 'colored',
+        });
+      }
     }
-  };
+    
+    fetchImg();
+  }, [page, query]);
 
-  scrollToBottom = () => {
+  const scrollToBottom = () => {
     scroll.scrollToBottom();
   };
 
-   handleFormSubmit = query => {
-    this.setState({ query, gallery: [], page: 1, status: 'pending'});
+  const handleFormSubmit = query => {
+    setQuery(query);
+    setGallery([]);
+    setPage(1);
+    setStatus(Status.PENDING);
   };
 
-  handleLoadMoreButton = () => {
-    this.setState(prevState => ({isLoading: true, page: prevState.page + 1 }));
+  const handleLoadMoreButton = () => {
+    setIsLoading(true);
+    setPage(state => state + 1);
   };
 
-  toggleModal = () =>  this.setState(({ showModal }) => ({
-      showModal: !showModal,
-  }));
+  const toggleModal = () =>  setShowModal(!showModal);
 
-  onImageClick = e => {
+  const onImageClick = e => {
   
     if (e.target.nodeName !== 'IMG') {
       return;
     }
-
-    this.setState({
-      largeUrl: e.target.getAttribute('data-src'),
-      alt: e.target.getAttribute('alt'),
-    });
-
-    this.toggleModal();
+    
+    setLargeUrl(e.target.getAttribute('data-src'));
+    setAlt(e.target.getAttribute('alt'));
+    toggleModal();
   };
-  
-  render() {
-    const { gallery, status, showModal, isLoading, largeUrl, alt } = this.state;
   
     return (
       <>
      
-        <Searchbar onSubmit={this.handleFormSubmit} />
+        <Searchbar onSubmit={handleFormSubmit} />
         <Container>
-          {status === 'idle' && <Text>Enter your query</Text>}
-          {status === 'pending' && <Spinner />}
-          {status === 'resolved' && (
+          {status === Status.IDLE && <Text>Enter your query</Text>}
+          {status === Status.PENDING && <Spinner />}
+          {status === Status.RESOLVED && (
             <>
-              <ImageGallery gallery={gallery} onClick={this.onImageClick} />
+              <ImageGallery gallery={gallery} onClick={onImageClick} />
               {isLoading && <Spinner />}
-              {gallery.length >= 12 && !isLoading && <Button onClick={this.handleLoadMoreButton} />}
+              {gallery.length >= 12 && !isLoading && <Button onClick={handleLoadMoreButton} />}
             </>
           )}
-          {showModal && <Modal src={largeUrl} alt={alt} onClick={this.toggleModal} />}
+          {showModal && <Modal src={largeUrl} alt={alt} onClick={toggleModal} />}
           <ToastContainer autoClose={3000} />
         </Container>
       </>
     );
- }
- 
 };
 
 
