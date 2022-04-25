@@ -1,11 +1,13 @@
-import { useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import PropTypes from 'prop-types';
+import { Spinner } from "../Loader/Loader";
 import { ModalBackdrop, ModalWindow } from "./Modal.styled";
 
 const modalRoot = document.querySelector('#modal-root');
 
-export const Modal = ({alt, src, onClick}) => {
+export const Modal = ({ alt, src, onClick }) => {
+    const [loaded, setLoaded] = useState(false);
 
     useEffect(() => {
         window.addEventListener('keydown', handleKeyDown);
@@ -27,10 +29,15 @@ export const Modal = ({alt, src, onClick}) => {
         }
     };
 
+    const onLoad = () => {
+    setLoaded(true);
+    };
+
         return createPortal(
             <ModalBackdrop onClick={handleBackdropClick}>
                 <ModalWindow>
-                    <img src={src} alt={alt}/>
+                    <img src={src} alt={alt} onLoad={onLoad} style={{ display: loaded ? "block" : "none" }} />
+                    {!loaded && <Spinner />}
                 </ModalWindow>
             </ModalBackdrop>,
             modalRoot,
